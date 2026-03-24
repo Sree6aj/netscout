@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "target": "192.168.56.101",
+    "scan_time": "2025-08-15 14:32:11",
+    "tool": "NetScout v1.0"
+  },
+  "open_ports": {
+    "21": {"port": 21, "state": "open", "service": "FTP",     "banner": "220 (vsFTPd 2.3.4)"},
+    "22": {"port": 22, "state": "open", "service": "SSH",     "banner": "SSH-2.0-OpenSSH_4.7p1 Debian-8ubuntu1"},
+    "80": {"port": 80, "state": "open", "service": "HTTP",    "banner": "HTTP/1.1 200 OK\r\nServer: Apache/2.2.8"},
+    "139":{"port":139, "state": "open", "service": "NetBIOS", "banner": ""},
+    "445":{"port":445, "state": "open", "service": "SMB",     "banner": ""}
+  },
+  "service_enumeration": {
+    "ftp": {
+      "anonymous_login": true,
+      "banner": "220 (vsFTPd 2.3.4)",
+      "details": [
+        "Anonymous FTP login SUCCESSFUL",
+        "SYST: 215 UNIX Type: L8"
+      ]
+    },
+    "ssh": {
+      "banner": "SSH-2.0-OpenSSH_4.7p1 Debian-8ubuntu1",
+      "version": "OpenSSH_4.7p1 Debian-8ubuntu1",
+      "details": [
+        "SSH version string: OpenSSH_4.7p1 Debian-8ubuntu1",
+        "WARNING: OpenSSH 4.7 may be outdated — consider upgrading to 9.x+"
+      ]
+    },
+    "http_80": {
+      "headers": {"server": "Apache/2.2.8 (Ubuntu) DAV/2"},
+      "server": "Apache/2.2.8 (Ubuntu) DAV/2",
+      "details": [
+        "Status: HTTP/1.1 200 OK",
+        "Server header: Apache/2.2.8 (Ubuntu) DAV/2",
+        "Missing security header: X-Frame-Options",
+        "Missing security header: Content-Security-Policy",
+        "Missing header: Strict-Transport-Security (HSTS)"
+      ],
+      "interesting_paths": [
+        "/phpMyAdmin → 200",
+        "/twiki → 200",
+        "/mutillidae → 200"
+      ]
+    },
+    "smb": {
+      "smb_detected": true,
+      "smb_version": "SMBv1 (detected)",
+      "details": [
+        "SMB/NetBIOS port 445 is open",
+        "SMBv1 negotiate response received — POTENTIAL EternalBlue risk"
+      ]
+    }
+  },
+  "vulnerabilities": [
+    {
+      "desc": "SMBv1 Protocol May Be Enabled (EternalBlue Risk)",
+      "severity": "CRITICAL",
+      "cve": "CVE-2017-0143",
+      "remediation": "Disable SMBv1 immediately. Apply MS17-010 patch.",
+      "port": 445,
+      "evidence": "SMB port 445 open; SMBv1 negotiation possible"
+    },
+    {
+      "desc": "Anonymous FTP Login Allowed",
+      "severity": "HIGH",
+      "cve": "N/A",
+      "remediation": "Disable anonymous FTP access on the server.",
+      "port": 21,
+      "evidence": "Anonymous FTP login succeeded"
+    },
+    {
+      "desc": "FTP Transmits Credentials in Cleartext",
+      "severity": "HIGH",
+      "cve": "N/A",
+      "remediation": "Replace FTP with SFTP or FTPS.",
+      "port": 21,
+      "evidence": "FTP service detected on port 21"
+    },
+    {
+      "desc": "HTTP Server Version Disclosed in Header",
+      "severity": "LOW",
+      "cve": "N/A",
+      "remediation": "Suppress server version via ServerTokens Prod (Apache).",
+      "port": 80,
+      "evidence": "Server: Apache/2.2.8 (Ubuntu) DAV/2"
+    }
+  ]
+}
